@@ -12,10 +12,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\Image;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Message\AddPonkaToImage;
 
 class ImagePostController extends AbstractController
 {
@@ -34,7 +36,7 @@ class ImagePostController extends AbstractController
     /**
      * @Route("/api/images", methods="POST")
      */
-    public function create(Request $request, ValidatorInterface $validator, PhotoFileManager $photoManager, EntityManagerInterface $entityManager, PhotoPonkaficator $ponkaficator)
+    public function create(Request $request, ValidatorInterface $validator, PhotoFileManager $photoManager, EntityManagerInterface $entityManager, PhotoPonkaficator $ponkaficator, MessageBusInterface $messageBus)
     {
         /** @var UploadedFile $imageFile */
         $imageFile = $request->files->get('file');
@@ -55,6 +57,12 @@ class ImagePostController extends AbstractController
 
         $entityManager->persist($imagePost);
         $entityManager->flush();
+
+        /*
+         * Dispatch the message!
+         */
+        $message = new AddPonkaToImage();
+        $messageBus->dispatch($message);
 
         /*
          * Start Ponkafication!
