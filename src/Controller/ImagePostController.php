@@ -61,7 +61,7 @@ class ImagePostController extends AbstractController
         /*
          * Dispatch the message!
          */
-        $message = new AddPonkaToImage($imagePost);
+        $message = new AddPonkaToImage($imagePost->getId());
         $messageBus->dispatch($message);
 
         return $this->toJson($imagePost, 201);
