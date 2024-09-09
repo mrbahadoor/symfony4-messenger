@@ -3,28 +3,30 @@
 namespace App\MessageHandler;
 
 use App\Message\DeleteImagePost;
-use App\Photo\PhotoFileManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use App\Message\DeletePhotoFile;
 
 class DeleteImagePostHandler implements MessageHandlerInterface
 {
-    private PhotoFileManager $photoManager;
+    private MessageBusInterface $messageBus;
     private EntityManagerInterface $entityManager;
 
-    public function __construct(PhotoFileManager $photoManager, EntityManagerInterface $entityManager)
+    public function __construct(MessageBusInterface $messageBus, EntityManagerInterface $entityManager)
     {
-        $this->photoManager = $photoManager;
+        $this->messageBus = $messageBus;
         $this->entityManager = $entityManager;
     }
     
     public function __invoke(DeleteImagePost $deleteImagePost)
     {
         $imagePost = $deleteImagePost->getImagePost();
+        $fileName = $imagePost->getFilename();
         
-        $this->photoManager->deleteImage($imagePost->getFilename());
-
         $this->entityManager->remove($imagePost);
         $this->entityManager->flush();
+
+        $this->messageBus->dispatch(new DeletePhotoFile($fileName));
     }
 }
