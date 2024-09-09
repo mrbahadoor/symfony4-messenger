@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\ImagePost;
-use App\Photo\PhotoPonkaficator;
 use App\Repository\ImagePostRepository;
 use App\Photo\PhotoFileManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -18,6 +17,7 @@ use Symfony\Component\Validator\Constraints\Image;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Message\AddPonkaToImage;
+use App\Message\DeleteImagePost;
 
 class ImagePostController extends AbstractController
 {
@@ -70,12 +70,10 @@ class ImagePostController extends AbstractController
     /**
      * @Route("/api/images/{id}", methods="DELETE")
      */
-    public function delete(ImagePost $imagePost, EntityManagerInterface $entityManager, PhotoFileManager $photoManager)
+    public function delete(ImagePost $imagePost, MessageBusInterface $messageBus)
     {
-        $photoManager->deleteImage($imagePost->getFilename());
-
-        $entityManager->remove($imagePost);
-        $entityManager->flush();
+        $message = new DeleteImagePost($imagePost);
+        $messageBus->dispatch($message);
 
         return new Response(null, 204);
     }
